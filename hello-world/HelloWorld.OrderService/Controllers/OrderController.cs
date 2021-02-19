@@ -7,11 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Dapr;
-using Dapr.Client;
-using Dapr.Actors;
-using Dapr.Extensions;
-using Dapr.AppCallback;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
@@ -21,7 +16,7 @@ using Newtonsoft.Json;
 
 namespace HelloWorld.Controllers
 {
-    [Route("[controller]")]
+    [Route("[controller]/[action]")]
     public class OrderController : ControllerBase
     {
         /// <summary>
@@ -43,43 +38,14 @@ namespace HelloWorld.Controllers
             _httpClientFactory = httpClientFactory;
         }
 
-        /// <summary>
-        /// 获取订单
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet]
-        public async Task<string> Query()
-        {
-            try
-            {
-                // 拼接 dapr state url
-                var stateUrl = $"{DAPR_SIDECAR_HTTP}/state/statestore/{STATE_STORE_KEY}";
-
-                // 创建http client
-                var httpClient = _httpClientFactory.CreateClient("dapr_state");
-
-                // 发送请求
-                var response = await httpClient.GetAsync(stateUrl);
-                if (response.StatusCode != System.Net.HttpStatusCode.OK)
-                {
-                    return "获取订单失败!";
-                }
-                return await response.Content.ReadAsStringAsync();
-            }
-            catch (Exception ex)
-            {
-                this._logger.LogError(ex, "获取订单出现错误!");
-                return ex.Message;
-            }
-        }
 
         /// <summary>
         /// 新建订单
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        [HttpPost("/NewOrder")]
-        public async Task<string> NewOrder([FromBody]NewOrderInput input)
+        [HttpPost]
+        public async Task<string> Create([FromBody]NewOrderInput input)
         {
             try
             {
@@ -122,11 +88,41 @@ namespace HelloWorld.Controllers
 
 
         /// <summary>
+        /// 获取订单
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<string> Get()
+        {
+            try
+            {
+                // 拼接 dapr state url
+                var stateUrl = $"{DAPR_SIDECAR_HTTP}/state/statestore/{STATE_STORE_KEY}";
+
+                // 创建http client
+                var httpClient = _httpClientFactory.CreateClient("dapr_state");
+
+                // 发送请求
+                var response = await httpClient.GetAsync(stateUrl);
+                if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    return "获取订单失败!";
+                }
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, "获取订单出现错误!");
+                return ex.Message;
+            }
+        }
+
+        /// <summary>
         /// 删除订单
         /// </summary>
         /// <returns></returns>
         [HttpDelete]
-        public async Task<string> Remove()
+        public async Task<string> Delete()
         {
             try
             {

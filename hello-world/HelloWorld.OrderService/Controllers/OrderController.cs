@@ -13,6 +13,7 @@ using System.Text;
 using System.Net.Http.Headers;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
+using Dapr.Client;
 
 namespace HelloWorld.Controllers
 {
@@ -22,17 +23,22 @@ namespace HelloWorld.Controllers
         /// <summary>
         /// dapr sidecar http 地址
         /// </summary>
-        const string DAPR_SIDECAR_HTTP = "http://localhost:3500/v1.0";
+        const string DAPR_SIDECAR_HTTP = "http://localhost:3500";
+
+        /// <summary>
+        /// statestore name
+        /// </summary>
+        const string STATE_STORE_NAME = "statestore";
 
         /// <summary>
         /// dapr state 存储键值
         /// </summary>
-        const string STATE_STORE_KEY = "order";
+        const string STATE_KEY = "order";
 
         readonly ILogger<OrderController> _logger;
         readonly IHttpClientFactory _httpClientFactory;
 
-        public OrderController(ILogger<OrderController> logger,  IHttpClientFactory httpClientFactory)
+        public OrderController(ILogger<OrderController> logger, IHttpClientFactory httpClientFactory)
         {
             _logger = logger;
             _httpClientFactory = httpClientFactory;
@@ -45,37 +51,15 @@ namespace HelloWorld.Controllers
         /// <param name="input"></param>
         /// <returns></returns>
         [HttpPost]
-        public async Task<string> Create([FromBody]NewOrderInput input)
+        public async Task<string> Create([FromBody] NewOrderInput input)
         {
+            using var client = new DaprClientBuilder()
+                .UseHttpEndpoint(DAPR_SIDECAR_HTTP)
+                .Build();
+
             try
             {
-                // 拼接 dapr state url
-                var stateUrl = $"{DAPR_SIDECAR_HTTP}/state/statestore";
-
-
-                // 创建http client
-                var httpClient = _httpClientFactory.CreateClient("dapr_state");
-
-                // 创建请求参数
-                var states = new List<StateDto<NewOrderInput>>()
-                {
-                    new StateDto<NewOrderInput>(STATE_STORE_KEY,input)
-                };
-                var setting = new JsonSerializerSettings
-                {
-                    ContractResolver = new Newtonsoft.Json.Serialization.CamelCasePropertyNamesContractResolver()
-                };
-
-                var requestDataString = JsonConvert.SerializeObject(states, setting);
-                var stringContent = new StringContent(requestDataString, Encoding.UTF8, "application/json");
-
-                // 发送请求
-                var response = await httpClient.PostAsync(stateUrl, stringContent);
-                if (response.StatusCode != System.Net.HttpStatusCode.Created)
-                {
-                    return "保存订单失败!";
-                }
-
+                await client.SaveStateAsync(STATE_STORE_NAME, STATE_KEY, input.Data);
 
                 return "保存订单成功";
             }
@@ -94,21 +78,19 @@ namespace HelloWorld.Controllers
         [HttpGet]
         public async Task<string> Get()
         {
+            using var client = new DaprClientBuilder()
+                .UseHttpEndpoint(DAPR_SIDECAR_HTTP)
+                .Build();
+
             try
             {
-                // 拼接 dapr state url
-                var stateUrl = $"{DAPR_SIDECAR_HTTP}/state/statestore/{STATE_STORE_KEY}";
-
-                // 创建http client
-                var httpClient = _httpClientFactory.CreateClient("dapr_state");
-
-                // 发送请求
-                var response = await httpClient.GetAsync(stateUrl);
-                if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                var res = await client.GetStateAsync<OrderDto>(STATE_STORE_NAME, STATE_KEY);
+                if (res == null)
                 {
                     return "获取订单失败!";
                 }
-                return await response.Content.ReadAsStringAsync();
+
+                return JsonConvert.SerializeObject(res);
             }
             catch (Exception ex)
             {
@@ -124,20 +106,13 @@ namespace HelloWorld.Controllers
         [HttpDelete]
         public async Task<string> Delete()
         {
+            using var client = new DaprClientBuilder()
+                .UseHttpEndpoint(DAPR_SIDECAR_HTTP)
+                .Build();
+
             try
             {
-                // 拼接 dapr state url
-                var stateUrl = $"{DAPR_SIDECAR_HTTP}/state/statestore/{STATE_STORE_KEY}";
-
-                // 创建http client
-                var httpClient = _httpClientFactory.CreateClient("dapr_state");
-
-                // 发送请求
-                var response = await httpClient.DeleteAsync(stateUrl);
-                if (response.StatusCode != System.Net.HttpStatusCode.OK)
-                {
-                    return "删除订单失败!";
-                }
+                await client.DeleteStateAsync(STATE_STORE_NAME, STATE_KEY);
                 return "删除订单成功!";
             }
             catch (Exception ex)

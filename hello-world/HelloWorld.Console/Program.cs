@@ -24,8 +24,7 @@ namespace HelloWorld
         {
 
             var client = DaprClient.CreateInvokeHttpClient(
-                appId: APP_ID,
-                daprEndpoint: DAPR_SIDECAR_HTTP
+                appId: APP_ID
                 );
 
             var count = 1;

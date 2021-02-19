@@ -24,16 +24,22 @@ namespace HelloWorld.Controllers
     [Route("[controller]")]
     public class OrderController : ControllerBase
     {
-        const string StateStoreName = "order";
+        /// <summary>
+        /// dapr sidecar http 地址
+        /// </summary>
+        const string DAPR_SIDECAR_HTTP = "http://localhost:3500/v1.0";
+
+        /// <summary>
+        /// dapr state 存储键值
+        /// </summary>
+        const string STATE_STORE_KEY = "order";
 
         readonly ILogger<OrderController> _logger;
-        readonly IConfiguration _configuration;
         readonly IHttpClientFactory _httpClientFactory;
 
-        public OrderController(ILogger<OrderController> logger, IConfiguration configuration, IHttpClientFactory httpClientFactory)
+        public OrderController(ILogger<OrderController> logger,  IHttpClientFactory httpClientFactory)
         {
             _logger = logger;
-            _configuration = configuration;
             _httpClientFactory = httpClientFactory;
         }
 
@@ -46,18 +52,14 @@ namespace HelloWorld.Controllers
         {
             try
             {
-                // 读取配置获取 dapr runtime 的 http 路径
-                var daprHttpService = _configuration["Dapr:RuntimeHttpService"];
                 // 拼接 dapr state url
-                var stateUrl = $"{daprHttpService}/state/statestore/{StateStoreName}";
-
+                var stateUrl = $"{DAPR_SIDECAR_HTTP}/state/statestore/{STATE_STORE_KEY}";
 
                 // 创建http client
                 var httpClient = _httpClientFactory.CreateClient("dapr_state");
 
-
+                // 发送请求
                 var response = await httpClient.GetAsync(stateUrl);
-
                 if (response.StatusCode != System.Net.HttpStatusCode.OK)
                 {
                     return "获取订单失败!";
@@ -81,10 +83,8 @@ namespace HelloWorld.Controllers
         {
             try
             {
-                // 读取配置获取 dapr runtime 的 http 路径
-                var daprHttpService = _configuration["Dapr:RuntimeHttpService"];
                 // 拼接 dapr state url
-                var stateUrl = $"{daprHttpService}/state/statestore";
+                var stateUrl = $"{DAPR_SIDECAR_HTTP}/state/statestore";
 
 
                 // 创建http client
@@ -93,7 +93,7 @@ namespace HelloWorld.Controllers
                 // 创建请求参数
                 var states = new List<StateDto<NewOrderInput>>()
                 {
-                    new StateDto<NewOrderInput>(StateStoreName,input)
+                    new StateDto<NewOrderInput>(STATE_STORE_KEY,input)
                 };
                 var setting = new JsonSerializerSettings
                 {
@@ -103,6 +103,7 @@ namespace HelloWorld.Controllers
                 var requestDataString = JsonConvert.SerializeObject(states, setting);
                 var stringContent = new StringContent(requestDataString, Encoding.UTF8, "application/json");
 
+                // 发送请求
                 var response = await httpClient.PostAsync(stateUrl, stringContent);
                 if (response.StatusCode != System.Net.HttpStatusCode.Created)
                 {
@@ -129,18 +130,14 @@ namespace HelloWorld.Controllers
         {
             try
             {
-                // 读取配置获取 dapr runtime 的 http 路径
-                var daprHttpService = _configuration["Dapr:RuntimeHttpService"];
                 // 拼接 dapr state url
-                var stateUrl = $"{daprHttpService}/state/statestore/{StateStoreName}";
-
+                var stateUrl = $"{DAPR_SIDECAR_HTTP}/state/statestore/{STATE_STORE_KEY}";
 
                 // 创建http client
                 var httpClient = _httpClientFactory.CreateClient("dapr_state");
 
-
+                // 发送请求
                 var response = await httpClient.DeleteAsync(stateUrl);
-
                 if (response.StatusCode != System.Net.HttpStatusCode.OK)
                 {
                     return "删除订单失败!";

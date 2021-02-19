@@ -1,21 +1,32 @@
-using HelloWorld.Dtos;
+using Dapr.Client;
 
-using Newtonsoft.Json;
+using HelloWorld.Dtos;
 
 using System;
 using System.Net.Http;
+using System.Net.Http.Json;
 using System.Threading;
 
 namespace HelloWorld
 {
     class Program
     {
+        /// <summary>
+        /// dapr sidecar http 地址
+        /// </summary>
+        const string DAPR_SIDECAR_HTTP = "http://localhost:3500";
+
+        const string APP_ID = "orderservice";
+
+        const string METHOD_NAME = "/order/create";
+
         static void Main(string[] args)
         {
-            var orderServiceUrl = "http://localhost:3500/v1.0/invoke/orderservice";
-            var createApi = $"{orderServiceUrl}/method/order/create";
 
-            var httpClient = new HttpClient();
+            var client = DaprClient.CreateInvokeHttpClient(
+                appId: APP_ID,
+                daprEndpoint: DAPR_SIDECAR_HTTP
+                );
 
             var count = 1;
             while (true)
@@ -23,30 +34,17 @@ namespace HelloWorld
                 System.Console.WriteLine("第 {0} 次创建订单", count);
                 try
                 {
-                    var jsonStr = JsonConvert.SerializeObject(new NewOrderInput
+                    var input = new NewOrderInput
                     {
                         Data = new OrderDto
                         {
                             OrderId = count++.ToString()
                         }
-                    });
-                    var stringContent = new StringContent(jsonStr, System.Text.Encoding.UTF8, "application/json");
+                    };
+                    var res = client.PostAsJsonAsync(METHOD_NAME, input)
+                        .GetAwaiter().GetResult();
 
-                    var response = httpClient.PostAsync(createApi,stringContent).GetAwaiter().GetResult();
-                    if (response.StatusCode != System.Net.HttpStatusCode.OK)
-                    {
-                        System.Console.WriteLine(
-                            "StatusCode: {0} \r\nMessage: {1}",
-                            response.StatusCode,
-                            response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-                            );
-                    }
-                    else
-                    {
-                        System.Console.WriteLine(
-                            response.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-                            );
-                    }
+                    Console.WriteLine(res.Content.ReadAsStringAsync().GetAwaiter().GetResult());
                 }
                 catch (Exception ex)
                 {

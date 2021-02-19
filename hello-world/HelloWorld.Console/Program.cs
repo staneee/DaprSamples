@@ -13,7 +13,7 @@ namespace HelloWorld
         static void Main(string[] args)
         {
             var orderServiceUrl = "http://localhost:3500/v1.0/invoke/orderservice";
-            var createApi = $"{orderServiceUrl}/method/order";
+            var createApi = $"{orderServiceUrl}/method/order/create";
 
             var httpClient = new HttpClient();
 

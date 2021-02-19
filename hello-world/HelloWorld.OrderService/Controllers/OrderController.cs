@@ -38,11 +38,45 @@ namespace HelloWorld.Controllers
         }
 
         /// <summary>
+        /// 获取订单
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<string> Query()
+        {
+            try
+            {
+                // 读取配置获取 dapr runtime 的 http 路径
+                var daprHttpService = _configuration["Dapr:RuntimeHttpService"];
+                // 拼接 dapr state url
+                var stateUrl = $"{daprHttpService}/state/statestore/{StateStoreName}";
+
+
+                // 创建http client
+                var httpClient = _httpClientFactory.CreateClient("dapr_state");
+
+
+                var response = await httpClient.GetAsync(stateUrl);
+
+                if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                {
+                    return "获取订单失败!";
+                }
+                return await response.Content.ReadAsStringAsync();
+            }
+            catch (Exception ex)
+            {
+                this._logger.LogError(ex, "获取订单出现错误!");
+                return ex.Message;
+            }
+        }
+
+        /// <summary>
         /// 新建订单
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        [HttpPost]
+        [HttpPost("/NewOrder")]
         public async Task<string> NewOrder([FromBody]NewOrderInput input)
         {
             try
@@ -81,40 +115,6 @@ namespace HelloWorld.Controllers
             catch (Exception ex)
             {
                 this._logger.LogError(ex, "保存订单出错!");
-                return ex.Message;
-            }
-        }
-
-        /// <summary>
-        /// 获取订单
-        /// </summary>
-        /// <returns></returns>
-        [HttpGet]
-        public async Task<string> Query()
-        {
-            try
-            {
-                // 读取配置获取 dapr runtime 的 http 路径
-                var daprHttpService = _configuration["Dapr:RuntimeHttpService"];
-                // 拼接 dapr state url
-                var stateUrl = $"{daprHttpService}/state/statestore/{StateStoreName}";
-
-
-                // 创建http client
-                var httpClient = _httpClientFactory.CreateClient("dapr_state");
-
-
-                var response = await httpClient.GetAsync(stateUrl);
-
-                if (response.StatusCode != System.Net.HttpStatusCode.OK)
-                {
-                    return "获取订单失败!";
-                }
-                return await response.Content.ReadAsStringAsync();
-            }
-            catch (Exception ex)
-            {
-                this._logger.LogError(ex, "获取订单出现错误!");
                 return ex.Message;
             }
         }

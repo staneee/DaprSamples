@@ -4,12 +4,15 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.30907.101
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "hello-world", "hello-world", "{7BF9AF75-11C7-4B64-8192-CF76C62409B9}"
+	ProjectSection(SolutionItems) = preProject
+		hello-world\README.md = hello-world\README.md
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HelloWorld.Common", "hello-world\HelloWorld.Common\HelloWorld.Common.csproj", "{CDA4B2DD-261A-4325-B987-829868822993}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HelloWorld.OrderService", "hello-world\HelloWorld.OrderService\HelloWorld.OrderService.csproj", "{0D0C2F8C-6E3C-42AC-A66F-E2EDC6E90A67}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HelloWorld.Console", "hello-world\HelloWorld.Console\HelloWorld.Console.csproj", "{E604F6D9-C0E1-4F43-B036-77B675F3E506}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HelloWorld.Console", "hello-world\HelloWorld.Console\HelloWorld.Console.csproj", "{E604F6D9-C0E1-4F43-B036-77B675F3E506}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
